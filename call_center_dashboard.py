@@ -53,7 +53,8 @@ def load_data(csv_path):
     df['cohort'] = df['sign_up_date'].dt.to_period('M').astype(str)
 
     # Calculate time on supply (difference in whole days)
-    df['time_on_supply'] = (df['called_at'].dt.date - df['sign_up_date'].dt.date).dt.days
+    df['time_on_supply'] = (df['called_at'] - df['sign_up_date']).dt.days
+
 
     return df
 
