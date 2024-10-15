@@ -21,24 +21,18 @@ st.set_page_config(
 # 2. Load and Preprocess Data
 # -------------------------
 
-import pandas as pd
-
-import pandas as pd
-
 @st.cache_data
 def load_data(csv_path):
     # Read CSV file
     df = pd.read_csv(csv_path)
 
     # Convert 'called_at' and 'sign_up_date' columns to datetime, handling errors
-    df['called_at'] = pd.to_datetime(df['called_at'], errors='coerce')
-    df['sign_up_date'] = pd.to_datetime(df['sign_up_date'], errors='coerce')
+    df['called_at'] = pd.to_datetime(df['called_at'], errors='coerce', utc=True)
+    df['sign_up_date'] = pd.to_datetime(df['sign_up_date'], errors='coerce', utc=True)
 
-    # Localize tz-naive timestamps to UTC if they are not timezone-aware
-    if df['called_at'].dt.tz is None:
-        df['called_at'] = df['called_at'].dt.tz_localize('UTC')
-    if df['sign_up_date'].dt.tz is None:
-        df['sign_up_date'] = df['sign_up_date'].dt.tz_localize('UTC')
+    # Ensure both columns are in UTC
+    df['called_at'] = df['called_at'].dt.tz_convert('UTC')
+    df['sign_up_date'] = df['sign_up_date'].dt.tz_convert('UTC')
 
     # Handle string columns and missing values
     df['direction'] = df['direction'].str.capitalize().fillna('Unknown')
@@ -58,8 +52,8 @@ def load_data(csv_path):
     # Add cohort column based on 'sign_up_date'
     df['cohort'] = df['sign_up_date'].dt.to_period('M').astype(str)
 
-    # Calculate time on supply (difference in days)
-    df['time_on_supply'] = (df['called_at'] - df['sign_up_date']).dt.days
+    # Calculate time on supply (difference in whole days)
+    df['time_on_supply'] = (df['called_at'].dt.date - df['sign_up_date'].dt.date).dt.days
 
     return df
 
@@ -259,7 +253,7 @@ agent_performance = pd.merge(agent_performance, agent_seniority[['agent_id', 'se
 
 #Client Cohort Analysis (using the full dataset)
 cohort_df = df.copy()  # Use the full dataset for cohort analysis
-
+# i think i need to cast
 total_calls_per_cohort = cohort_df.groupby('cohort')['call_id'].nunique().reset_index().rename(columns={'call_id': 'total_calls'})
 total_calls_per_cohort = total_calls_per_cohort.sort_values('cohort')
 
