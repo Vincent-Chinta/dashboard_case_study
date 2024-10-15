@@ -23,10 +23,10 @@ st.set_page_config(
 
 @st.cache_data
 def load_data(csv_path):
-    # Read CSV file with specified columns as datetime
+    # Read CSV file
     df = pd.read_csv(csv_path)
 
-    # Convert 'called_at' and 'sign_up_date' to datetime explicitly
+    # Convert 'called_at' and 'sign_up_date' columns to datetime, handling errors
     df['called_at'] = pd.to_datetime(df['called_at'], errors='coerce')
     df['sign_up_date'] = pd.to_datetime(df['sign_up_date'], errors='coerce')
 
@@ -52,6 +52,7 @@ def load_data(csv_path):
     df['time_on_supply'] = (df['called_at'] - df['sign_up_date']).dt.days
 
     return df
+
 
 
 
