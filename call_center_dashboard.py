@@ -41,7 +41,7 @@ def load_data(csv_path):
 # 3. Load Data
 # -------------------------
 # data/one_big_table.csv
-csv_file_path = '/Users/vincentchinta/Desktop/case_study_oe/one_big_table.csv'  # Replace with your actual file path
+csv_file_path = 'one_big_table.csv'  # Replace with your actual file path
 df = load_data(csv_file_path)
 
 # -------------------------
