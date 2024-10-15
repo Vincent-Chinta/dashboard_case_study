@@ -23,6 +23,8 @@ st.set_page_config(
 
 import pandas as pd
 
+import pandas as pd
+
 @st.cache_data
 def load_data(csv_path):
     # Read CSV file
@@ -32,9 +34,11 @@ def load_data(csv_path):
     df['called_at'] = pd.to_datetime(df['called_at'], errors='coerce')
     df['sign_up_date'] = pd.to_datetime(df['sign_up_date'], errors='coerce')
 
-    # Ensure both 'called_at' and 'sign_up_date' are timezone-naive for consistency
-    df['called_at'] = df['called_at'].dt.tz_convert(None)
-    df['sign_up_date'] = df['sign_up_date'].dt.tz_convert(None)
+    # Localize tz-naive timestamps to UTC if they are not timezone-aware
+    if df['called_at'].dt.tz is None:
+        df['called_at'] = df['called_at'].dt.tz_localize('UTC')
+    if df['sign_up_date'].dt.tz is None:
+        df['sign_up_date'] = df['sign_up_date'].dt.tz_localize('UTC')
 
     # Handle string columns and missing values
     df['direction'] = df['direction'].str.capitalize().fillna('Unknown')
@@ -58,6 +62,7 @@ def load_data(csv_path):
     df['time_on_supply'] = (df['called_at'] - df['sign_up_date']).dt.days
 
     return df
+
 
 # -------------------------
 # 3. Load Data
