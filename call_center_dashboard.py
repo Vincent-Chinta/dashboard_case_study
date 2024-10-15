@@ -23,8 +23,9 @@ st.set_page_config(
 
 @st.cache_data
 def load_data(csv_path):
+    # Read CSV with date parsing for 'called_at' and 'sign_up_date'
     df = pd.read_csv(csv_path, parse_dates=['called_at', 'sign_up_date'])
-    df['direction'] = df['direction'].str.capitalize()
+    df['direction'] = df['direction'].str.capitalize().fillna('Unknown')
     df['category'] = df['category'].astype(str).fillna('Unknown')
     df['reason'] = df['reason'].astype(str).fillna('Unknown')
     df['agent_id'] = df['agent_id'].astype(str).fillna('Unknown')
@@ -34,8 +35,10 @@ def load_data(csv_path):
     df['month'] = df['called_at'].dt.to_period('M').astype(str)
     df['talk_time_minutes'] = df['talk_time'] / 60
     df['cohort'] = df['sign_up_date'].dt.to_period('M').astype(str)
-    df['time_on_supply'] = (df['called_at'].dt.date - df['sign_up_date'].dt.date).dt.days
+    df['time_on_supply'] = (df['called_at'] - df['sign_up_date']).dt.days
+    df['time_on_supply'] = (df['called_at'] - df['sign_up_date']).dt.days
     return df
+
 
 # -------------------------
 # 3. Load Data
