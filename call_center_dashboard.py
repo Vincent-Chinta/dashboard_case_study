@@ -23,21 +23,36 @@ st.set_page_config(
 
 @st.cache_data
 def load_data(csv_path):
-    # Read CSV with date parsing for 'called_at' and 'sign_up_date'
-    df = pd.read_csv(csv_path, parse_dates=['called_at', 'sign_up_date'])
+    # Read CSV file with specified columns as datetime
+    df = pd.read_csv(csv_path)
+
+    # Convert 'called_at' and 'sign_up_date' to datetime explicitly
+    df['called_at'] = pd.to_datetime(df['called_at'], errors='coerce')
+    df['sign_up_date'] = pd.to_datetime(df['sign_up_date'], errors='coerce')
+
+    # Handle string columns and missing values
     df['direction'] = df['direction'].str.capitalize().fillna('Unknown')
     df['category'] = df['category'].astype(str).fillna('Unknown')
     df['reason'] = df['reason'].astype(str).fillna('Unknown')
     df['agent_id'] = df['agent_id'].astype(str).fillna('Unknown')
+
+    # Add date and time-related columns
     df['call_date'] = df['called_at'].dt.date
     df['call_hour'] = df['called_at'].dt.hour
     df['day_of_week'] = df['called_at'].dt.day_name()
     df['month'] = df['called_at'].dt.to_period('M').astype(str)
+
+    # Compute talk time in minutes
     df['talk_time_minutes'] = df['talk_time'] / 60
+
+    # Add cohort column based on 'sign_up_date'
     df['cohort'] = df['sign_up_date'].dt.to_period('M').astype(str)
+
+    # Calculate time on supply (difference in days)
     df['time_on_supply'] = (df['called_at'] - df['sign_up_date']).dt.days
-    df['time_on_supply'] = (df['called_at'] - df['sign_up_date']).dt.days
+
     return df
+
 
 
 # -------------------------
