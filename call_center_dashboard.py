@@ -21,6 +21,8 @@ st.set_page_config(
 # 2. Load and Preprocess Data
 # -------------------------
 
+import pandas as pd
+
 @st.cache_data
 def load_data(csv_path):
     # Read CSV file
@@ -29,6 +31,10 @@ def load_data(csv_path):
     # Convert 'called_at' and 'sign_up_date' columns to datetime, handling errors
     df['called_at'] = pd.to_datetime(df['called_at'], errors='coerce')
     df['sign_up_date'] = pd.to_datetime(df['sign_up_date'], errors='coerce')
+
+    # Ensure both 'called_at' and 'sign_up_date' are timezone-naive for consistency
+    df['called_at'] = df['called_at'].dt.tz_convert(None)
+    df['sign_up_date'] = df['sign_up_date'].dt.tz_convert(None)
 
     # Handle string columns and missing values
     df['direction'] = df['direction'].str.capitalize().fillna('Unknown')
@@ -52,9 +58,6 @@ def load_data(csv_path):
     df['time_on_supply'] = (df['called_at'] - df['sign_up_date']).dt.days
 
     return df
-
-
-
 
 # -------------------------
 # 3. Load Data
