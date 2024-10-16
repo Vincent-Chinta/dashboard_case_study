@@ -50,10 +50,17 @@ def load_data(csv_path):
     df['talk_time_minutes'] = df['talk_time'] / 60
 
     # Add cohort column based on 'sign_up_date'
+    #This is wrong need to fix
     df['cohort'] = df['sign_up_date'].dt.to_period('M').astype(str)
 
     # Calculate time on supply (difference in whole days)
+    #This is wrong need to fix
     df['time_on_supply'] = (df['called_at'] - df['sign_up_date']).dt.days
+    # Calculate time on supply correctly
+    first_call_date = df.groupby('account_id')['called_at'].min().reset_index()
+    first_call_date.columns = ['account_id', 'first_call_date']
+    df = pd.merge(df, first_call_date, on='account_id', how='left')
+    df['time_on_supply'] = (df['first_call_date'] - df['sign_up_date']).dt.days
 
 
     return df
@@ -253,20 +260,27 @@ agent_performance = pd.merge(calls_by_agent_perf, avg_talk_time_agent_perf, on='
 agent_performance = pd.merge(agent_performance, agent_seniority[['agent_id', 'seniority_days']], on='agent_id')
 
 #Client Cohort Analysis (using the full dataset)
-cohort_df = df.copy()  # Use the full dataset for cohort analysis
-# i think i need to cast
-total_calls_per_cohort = cohort_df.groupby('cohort')['call_id'].nunique().reset_index().rename(columns={'call_id': 'total_calls'})
-total_calls_per_cohort = total_calls_per_cohort.sort_values('cohort')
+# Client Cohort Analysis (using the full dataset)
+cohort_df = df.copy()
 
-avg_talk_time_per_cohort = cohort_df.groupby('cohort')['talk_time_minutes'].mean().reset_index().rename(columns={'talk_time_minutes': 'avg_talk_time'})
-avg_talk_time_per_cohort = avg_talk_time_per_cohort.sort_values('cohort')
+# Group by cohort and account_id to get unique customers per cohort
+unique_customers_per_cohort = cohort_df.groupby('cohort')['account_id'].nunique().reset_index()
+unique_customers_per_cohort.columns = ['cohort', 'unique_customers']
 
+total_calls_per_cohort = cohort_df.groupby('cohort')['call_id'].count().reset_index()
+total_calls_per_cohort.columns = ['cohort', 'total_calls']
+
+avg_talk_time_per_cohort = cohort_df.groupby('cohort')['talk_time_minutes'].mean().reset_index()
+avg_talk_time_per_cohort.columns = ['cohort', 'avg_talk_time']
+
+# Use the correct time_on_supply calculation
 time_on_supply_per_cohort = cohort_df.groupby('cohort')['time_on_supply'].mean().reset_index()
-time_on_supply_per_cohort = time_on_supply_per_cohort.sort_values('cohort')
 
-cohort_analysis = pd.merge(total_calls_per_cohort, avg_talk_time_per_cohort, on='cohort')
+# Merge all cohort metrics
+cohort_analysis = pd.merge(unique_customers_per_cohort, total_calls_per_cohort, on='cohort')
+cohort_analysis = pd.merge(cohort_analysis, avg_talk_time_per_cohort, on='cohort')
 cohort_analysis = pd.merge(cohort_analysis, time_on_supply_per_cohort, on='cohort')
-
+cohort_analysis = cohort_analysis.sort_values('cohort')
 
 
 # -------------------------
